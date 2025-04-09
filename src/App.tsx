@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Container, Typography, Button, CircularProgress, Alert, Box, CssBaseline, AppBar, Toolbar } from '@mui/material';
+import { Container, Button, CircularProgress, Alert, Box, CssBaseline, AppBar } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import SchoolIcon from '@mui/icons-material/School';
 import QuestionDisplay from './components/QuestionDisplay';
 // import { generateTodaiQuestion } from './geminiClient'; // 古いインポートを削除 or コメントアウト
 import { generateTodaiQuestionViaApi } from './apiClient'; // 新しいAPIクライアント関数をインポート

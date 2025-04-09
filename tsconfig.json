@@ -1,0 +1,37 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+    "compilerOptions": {
+      // ... (既存の compilerOptions) ...
+  
+      "jsx": "react-jsx", // React用設定
+      "lib": ["DOM", "DOM.Iterable", "ESNext"], // ブラウザAPIと最新JS機能
+      "module": "ESNext", // Pages Functions は ES Modules を使用
+      "target": "ESNext", // モダンなJSターゲット
+      "moduleResolution": "Bundler", // Vite/モダンなツール推奨
+  
+      // ここが重要！
+      "types": [
+        "vite/client",               // ViteクライアントAPI用 (import.meta.env など)
+        "@cloudflare/workers-types"  // Cloudflare Functions用
+      ],
+  
+      "allowJs": true, // 必要に応じてJSファイルも許可
+      "skipLibCheck": true, // 外部ライブラリの型チェックをスキップ
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "strict": true, // 厳格な型チェックを推奨
+      "forceConsistentCasingInFileNames": true,
+      "resolveJsonModule": true,
+      "isolatedModules": true, // Vite推奨
+      "noEmit": true // ReactアプリのビルドはViteが行うため true
+    },
+    // ここも重要！
+    "include": [
+      "src",         // Reactアプリのソースコード
+      "functions"    // Cloudflare Functions のコード
+    ]
+}

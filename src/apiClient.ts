@@ -20,9 +20,11 @@ export async function generateTodaiQuestionViaApi(modelName: string): Promise<Wo
             method: 'POST', // functions/api/generate.ts で onRequestPost を定義したため
             headers: {
                 'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 // Content-Type は body がなければ不要な場合もあるが、明示しても良い
                 // 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ model: modelName }),
             // 今回はFunctions側でプロンプトを固定しているのでボディは不要
             // body: JSON.stringify({ some_param: 'value' }), // もし何かパラメータを送る場合
         });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Container, Button, CircularProgress, Alert, Box, CssBaseline, AppBar } from '@mui/material';
+import { Container, Button, CircularProgress, Alert, Box, CssBaseline, AppBar ,Typography,Toolbar ,Radio, RadioGroup, FormControlLabel, FormControl, FormLabel} from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import QuestionDisplay from './components/QuestionDisplay';
 // import { generateTodaiQuestion } from './geminiClient'; // 古いインポートを削除 or コメントアウト
@@ -16,11 +16,20 @@ const theme = createTheme({
     },
   },
 });
-
+const AVAILABLE_MODELS = {
+  FLASH: 'gemini-1.5-flash',
+  PRO: 'gemini-1.5-pro',
+};
 function App() {
   const [question, setQuestion] = useState<WorldHistoryQuestion | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>(AVAILABLE_MODELS.FLASH);
+
+  // *** 変更点: モデル選択ラジオボタンの変更ハンドラ ***
+  const handleModelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedModel((event.target as HTMLInputElement).value);
+  };
 
   const handleGenerateClick = async () => {
     setLoading(true);
@@ -28,7 +37,9 @@ function App() {
     setQuestion(null);
     try {
       // 呼び出す関数を差し替え
-      const generatedQuestion = await generateTodaiQuestionViaApi();
+      console.log(`App: Requesting generation with model: ${selectedModel}`); // *** 変更点: ログ追加 ***
+      // *** 変更点: API呼び出し時に選択されたモデル名を渡す ***
+      const generatedQuestion = await generateTodaiQuestionViaApi(selectedModel);
       setQuestion(generatedQuestion);
     } catch (err: any) {
        console.error("App: Error caught from generateTodaiQuestionViaApi:", err);
@@ -45,11 +56,33 @@ function App() {
       <ThemeProvider theme={theme}>
           <CssBaseline />
           <AppBar position="static">
-              {/* ... Toolbar ... */}
+          <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            世界史 一問一答ジェネレーター (Gemini API)
+          </Typography>
+        </Toolbar>
           </AppBar>
           <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
               <Box sx={{ textAlign: 'center', mb: 3 }}>
-                  {/* ... Typography, Button ... */}
+              <Typography variant="h4" component="h1" gutterBottom>
+            新しい問題を生成する
+          </Typography>
+          <Typography variant="body1" color="textSecondary" paragraph>
+            下のボタンをクリックすると、Gemini APIを使用して世界史一問一答問題が自動生成されます。
+          </Typography>
+          <FormControl component="fieldset" sx={{ mb: 2 }}>
+            <FormLabel component="legend">使用モデル</FormLabel>
+            <RadioGroup
+              row
+              aria-label="gemini-model"
+              name="model-selection"
+              value={selectedModel}
+              onChange={handleModelChange}
+            >
+              <FormControlLabel value={AVAILABLE_MODELS.FLASH} control={<Radio />} label="Gemini 1.5 Flash (高速)" />
+              <FormControlLabel value={AVAILABLE_MODELS.PRO} control={<Radio />} label="Gemini 1.5 Pro (高品質)" />
+            </RadioGroup>
+          </FormControl>
                    <Button
                       variant="contained"
                       color="primary"

@@ -4,8 +4,17 @@ import { WorldHistoryQuestion } from './types';
 /**
  * バックエンドAPI (/api/generate) を呼び出して世界史の問題を取得します。
  */
-export async function generateTodaiQuestionViaApi(): Promise<WorldHistoryQuestion> {
+const AVAILABLE_MODELS = {
+    FLASH: 'gemini-1.5-flash',
+    PRO: 'gemini-1.5-pro',
+};
+export async function generateTodaiQuestionViaApi(modelName: string): Promise<WorldHistoryQuestion> {
     console.log("Frontend: Sending request to backend API (/api/generate)...");
+    const isValidModel = Object.values(AVAILABLE_MODELS).includes(modelName);
+    if (!isValidModel) {
+        console.warn(`apiClient: Invalid model name requested: ${modelName}. Falling back to Flash.`);
+        modelName = AVAILABLE_MODELS.FLASH; // 安全なデフォルトにフォールバック
+    }
     try {
         const response = await fetch('/api/generate', { // Cloudflare Functionsのエンドポイント
             method: 'POST', // functions/api/generate.ts で onRequestPost を定義したため

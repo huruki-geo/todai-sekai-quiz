@@ -3,7 +3,8 @@ import { GoogleGenerativeAI, GenerationConfig, HarmCategory, HarmBlockThreshold,
 
 // フロントエンドと同じ型定義を使う場合 (パスはプロジェクト構造に合わせて調整)
 // import type { WorldHistoryQuestion } from '../../src/types';
-
+const VALID_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+const DEFAULT_MODEL = 'gemini-1.5-flash';
 // スキーマ定義 (Functions内でも必要)
 const questionSchema = {
   type: "object",
@@ -23,7 +24,9 @@ const questionSchema = {
     "Theme",
   ],
 };
-
+interface RequestBody {
+    model?: string; // modelプロパティはオプショナル
+}
 // Cloudflare Pages Functions の環境変数などの型定義
 // 正式な型が必要な場合は `npm install -D @cloudflare/workers-types` してインポート
 interface Env {
@@ -32,23 +35,52 @@ interface Env {
 
 // POSTリクエストを処理するハンドラー関数
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-    const { request, env, waitUntil } = context;
+    const { request, env } = context;
 
-    // 環境変数からAPIキーを取得
     const apiKey = env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        console.error("GEMINI_API_KEY environment variable not set.");
+        console.error("Function: GEMINI_API_KEY environment variable not set.");
         return new Response(JSON.stringify({ error: "API key not configured on server." }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' },
+            status: 500, headers: { 'Content-Type': 'application/json' },
         });
     }
 
+    let requestedModel = DEFAULT_MODEL; // デフォルトモデルを設定
+
+    // *** 変更点: リクエストボディからモデル名を取得 ***
+    try {
+        // Content-Type ヘッダーを確認 (任意)
+        const contentType = request.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const body: RequestBody = await request.json();
+            if (body.model && VALID_MODELS.includes(body.model)) {
+                requestedModel = body.model; // 有効なモデル名なら採用
+                 console.log(`Function: Received valid model request: ${requestedModel}`);
+            } else if (body.model) {
+                 console.warn(`Function: Received invalid model request: ${body.model}. Using default: ${DEFAULT_MODEL}`);
+            } else {
+                console.log(`Function: No model specified in request body. Using default: ${DEFAULT_MODEL}`);
+            }
+        } else if (request.body) {
+             console.warn(`Function: Received POST request but Content-Type is not application/json or missing. Using default model.`);
+        } else {
+             console.log(`Function: Received POST request with no body. Using default model.`);
+        }
+    } catch (e) {
+        console.error("Function: Error parsing request body:", e);
+        // ボディのパースに失敗してもデフォルトモデルで続行する、またはエラーを返す
+        // return new Response(JSON.stringify({ error: "Invalid request body." }), { status: 400, headers: { 'Content-Type': 'application/json' }});
+         console.warn(`Function: Proceeding with default model: ${DEFAULT_MODEL}`);
+    }
+
+
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
+        // *** 変更点: 取得またはフォールバックしたモデル名を使用 ***
+        console.log(`Function: Initializing Gemini with model: ${requestedModel}`);
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-pro",
+            model: requestedModel, // ここで動的にモデルを指定
             safetySettings: [
                 { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
                 { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -73,6 +105,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     *   リード文のテーマに関連する、複数の独立した小問のリスト（配列形式）。設問数は必ず10問にしてください
     *   各小問は、特定の**固有名詞（人名、地名、事件名、制度名、会議名、条約名、著作名、宗教名、組織名など）**を答えさせる形式にしてください。
     *   設問は、リード文のテーマに沿って、**様々な時代・地域にわたる**内容を含めてください。時代や地域が偏らないように注意してください。中国史や遊牧民族史、文化史の問題は必ず含めてください。
+    *   同じような問題が連続しないようにしてください。
 3.  **解答 (Answers):**
     *   各設問に対応する**簡潔な固有名詞**のリスト（配列形式）。
     *   設問 (Questions) と同じ数、同じ順序で解答を生成してください。括弧書きでの補足は最小限にしてください。

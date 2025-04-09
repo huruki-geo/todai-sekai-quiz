@@ -48,7 +48,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-1.5-pro",
             safetySettings: [
                 { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
                 { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -72,7 +72,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 2.  **設問 (Questions):**
     *   リード文のテーマに関連する、複数の独立した小問のリスト（配列形式）。設問数は必ず10問にしてください
     *   各小問は、特定の**固有名詞（人名、地名、事件名、制度名、会議名、条約名、著作名、宗教名、組織名など）**を答えさせる形式にしてください。
-    *   設問は、リード文のテーマに沿って、**様々な時代・地域にわたる**内容を含めてください。時代や地域が偏らないように注意してください。
+    *   設問は、リード文のテーマに沿って、**様々な時代・地域にわたる**内容を含めてください。時代や地域が偏らないように注意してください。中国史や遊牧民族史、文化史の問題は必ず含めてください。
 3.  **解答 (Answers):**
     *   各設問に対応する**簡潔な固有名詞**のリスト（配列形式）。
     *   設問 (Questions) と同じ数、同じ順序で解答を生成してください。括弧書きでの補足は最小限にしてください。
